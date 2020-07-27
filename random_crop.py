@@ -55,7 +55,7 @@ def get_random_crop(image, crop_height, crop_width):
 
     return crop
 
-def random_paste_text(category, base_img, text):
+def random_paste_text(category, base_img, text, color):
     global ctr
 
     font = ImageFont.truetype(r'arial.ttf', 20)
@@ -71,7 +71,10 @@ def random_paste_text(category, base_img, text):
     x = np.random.randint(0, max_x)
     y = np.random.randint(0, max_y)
 
-    draw.text((x, y), text, (0, 0, 0), font)
+    if color == "black":
+        draw.text((x, y), text, (0, 0, 0), font)
+    elif color == "white":
+        draw.text((x, y), text, (255, 255, 255),font)
     base.save("images/{}.jpg".format(ctr))
     annotations['images'].append({"file_name": "{}.jpg".format(ctr), "height": base.size[1], "width": base.size[0], "id": ctr})
     annotations['annotations'].append({"area": text_size[0] * text_size[1], "iscrowd": 0, "image_id": ctr, "bbox": [x, y, text_size[1], text_size[0]], "category_id": alpha_to_id[category], "id": ctr, "ignore": 0, "segmentation": []})
@@ -117,11 +120,17 @@ for i in range(200):
 
     for alphabet in alphabets:
         category = alphabet
-        paste_img = np.array(Image.open("alphabets/{}.png".format(random.choice(alphabets[alphabet]))))
-        paste_text = random.choice(alphabets[alphabet])
+        for tp in ['alphabets', 'alphabets_inv']:
+            paste_img = np.array(Image.open("{}/{}.png".format(tp, random.choice(alphabets[alphabet]))))
+            paste_text = random.choice(alphabets[alphabet])
 
-        random_paste_image(category, random_crop, paste_img, paste_img.shape[0], paste_img.shape[1])
-        random_paste_text(category, random_crop, paste_text)
+            random_paste_image(category, random_crop, paste_img, paste_img.shape[0], paste_img.shape[1])
+            color = "black"
+            # if tp == "alphabets_inv":
+            #     color = "white"
+            # else:
+            #     color = "black"
+            random_paste_text(category, random_crop, paste_text, color)
 
 with open('anns.json', 'w') as outfile:
     json.dump(annotations, outfile)
