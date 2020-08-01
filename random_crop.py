@@ -65,8 +65,8 @@ def random_paste_text(category, base_img, text, color):
 
     text_size = draw.textsize(text, font)
 
-    max_x = base_img.shape[1] - text_size[1]
-    max_y = base_img.shape[0] - text_size[0]
+    max_x = base_img.shape[1] - text_size[0]
+    max_y = base_img.shape[0] - text_size[1]
 
     x = np.random.randint(0, max_x)
     y = np.random.randint(0, max_y)
@@ -77,7 +77,7 @@ def random_paste_text(category, base_img, text, color):
         draw.text((x, y), text, (255, 255, 255),font)
     base.save("images/{}.jpg".format(ctr))
     annotations['images'].append({"file_name": "{}.jpg".format(ctr), "height": base.size[1], "width": base.size[0], "id": ctr})
-    annotations['annotations'].append({"area": text_size[0] * text_size[1], "iscrowd": 0, "image_id": ctr, "bbox": [x, y, text_size[1], text_size[0]], "category_id": alpha_to_id[category], "id": ctr, "ignore": 0, "segmentation": []})
+    annotations['annotations'].append({"area": text_size[0] * text_size[1], "iscrowd": 0, "image_id": ctr, "bbox": [x, y, text_size[0], text_size[1]], "category_id": alpha_to_id[category], "id": ctr, "ignore": 0, "segmentation": []})
     ctr += 1
 
 
