@@ -57,6 +57,8 @@ def get_random_crop(image, crop_height, crop_width):
 
 def random_paste_text(category, base_img, text, color):
     global ctr
+    margin_x = 2
+    margin_y = 2
 
     font = ImageFont.truetype(r'arial.ttf', 20)
     base = Image.fromarray(base_img)
@@ -65,8 +67,8 @@ def random_paste_text(category, base_img, text, color):
 
     text_size = draw.textsize(text, font)
 
-    max_x = base_img.shape[1] - text_size[0]
-    max_y = base_img.shape[0] - text_size[1]
+    max_x = base_img.shape[1] - text_size[0] - 2 * margin_x
+    max_y = base_img.shape[0] - text_size[1] - 2 * margin_y
 
     x = np.random.randint(0, max_x)
     y = np.random.randint(0, max_y)
@@ -77,7 +79,7 @@ def random_paste_text(category, base_img, text, color):
         draw.text((x, y), text, (255, 255, 255),font)
     base.save("images/{}.jpg".format(ctr))
     annotations['images'].append({"file_name": "{}.jpg".format(ctr), "height": base.size[1], "width": base.size[0], "id": ctr})
-    annotations['annotations'].append({"area": text_size[0] * text_size[1], "iscrowd": 0, "image_id": ctr, "bbox": [x, y, text_size[0], text_size[1]], "category_id": alpha_to_id[category], "id": ctr, "ignore": 0, "segmentation": []})
+    annotations['annotations'].append({"area": (text_size[0] + 2 * margin_x) * (text_size[1] + 2 * margin_y), "iscrowd": 0, "image_id": ctr, "bbox": [x - margin_x, y - margin_y, text_size[0] + margin_x, text_size[1] + margin_y], "category_id": alpha_to_id[category], "id": ctr, "ignore": 0, "segmentation": []})
     ctr += 1
 
 
@@ -125,11 +127,11 @@ for i in range(200):
             paste_text = random.choice(alphabets[alphabet])
 
             random_paste_image(category, random_crop, paste_img, paste_img.shape[0], paste_img.shape[1])
-            color = "black"
-            # if tp == "alphabets_inv":
-            #     color = "white"
-            # else:
-            #     color = "black"
+            # color = "black"
+            if tp == "alphabets_inv":
+                color = "white"
+            else:
+                color = "black"
             random_paste_text(category, random_crop, paste_text, color)
 
 with open('anns.json', 'w') as outfile:
