@@ -55,7 +55,7 @@ def get_random_crop(image, crop_height, crop_width):
 
     return crop
 
-def random_paste_text(category, base_img, text, color):
+def random_paste_text(category, base_img, text):
     global ctr
     margin_x = 2
     margin_y = 2
@@ -67,11 +67,17 @@ def random_paste_text(category, base_img, text, color):
 
     text_size = draw.textsize(text, font)
 
-    max_x = base_img.shape[1] - text_size[0] - 2 * margin_x
-    max_y = base_img.shape[0] - text_size[1] - 2 * margin_y
+    max_x = base_img.shape[1] - text_size[0] - margin_x
+    max_y = base_img.shape[0] - text_size[1] - margin_y
 
-    x = np.random.randint(0, max_x)
-    y = np.random.randint(0, max_y)
+    x = np.random.randint(margin_x, max_x)
+    y = np.random.randint(margin_y, max_y)
+
+    crop = base_img[y - margin_y: y - margin_y + text_size[1], x - margin_x: x - margin_x + text_size[0]]
+    if crop.mean() <= 127:
+        color = "white"
+    else:
+        color = "black"
 
     if color == "black":
         draw.text((x, y), text, (0, 0, 0), font)
@@ -127,12 +133,7 @@ for i in range(200):
             paste_text = random.choice(alphabets[alphabet])
 
             random_paste_image(category, random_crop, paste_img, paste_img.shape[0], paste_img.shape[1])
-            # color = "black"
-            if tp == "alphabets_inv":
-                color = "white"
-            else:
-                color = "black"
-            random_paste_text(category, random_crop, paste_text, color)
+            random_paste_text(category, random_crop, paste_text)
 
 with open('anns.json', 'w') as outfile:
     json.dump(annotations, outfile)
