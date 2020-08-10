@@ -1,6 +1,7 @@
 import os
 import json
 import bisect
+import skimage
 import numpy as np
 import random
 from PIL import Image, ImageDraw, ImageFont
@@ -55,31 +56,55 @@ def get_random_crop(image, crop_height, crop_width):
 
     return crop
 
+def skimage_noisy(image):
+    img = image/255.0
+    gimg = skimage.util.random_noise(img, mode="gaussian")
+    gimg = (gimg * 255).astype(np.uint8)
+    return gimg
+
+def noisy(image):
+    row,col,ch= image.shape
+    mean = 0
+    var = 0.1
+    sigma = var**0.5
+    gauss = np.random.normal(mean,sigma,(row,col,ch))
+    gauss = gauss.reshape(row,col,ch)
+    noisy = image / 255.0 + gauss
+    noisy = (noisy * 255).astype(np.uint8)
+    return noisy
+
 def random_paste_text(category, base_img, text):
     global ctr
-    margin_x = np.random.randint(1, 6)
-    margin_y = np.random.randint(1, 6)
+    margin_x = np.random.randint(0, 6)
+    margin_y = np.random.randint(0, 6)
 
-    font_type = random.choice(['arial.ttf', 'arialbd.ttf', 'times.ttf', 'TimesNewRomB.ttf'])
+    font_type = random.choice(os.listdir("fonts"))
     font_size = np.random.randint(11, 25)
 
-    font = ImageFont.truetype(font_type, font_size)
-    base = Image.fromarray(base_img)
+    font = ImageFont.truetype(os.path.join("fonts", font_type), font_size)
+    is_noisy = np.random.choice([True, False], p=[0.3, 0.7])
+    if is_noisy:
+        base = Image.fromarray(skimage_noisy(base_img))
+    else:
+        base = Image.fromarray(base_img)
 
     draw = ImageDraw.Draw(base)
 
     text_size = draw.textsize(text, font)
 
-    x_min = random.randint(margin_x, margin_x + 5)
-    y_min = random.randint(margin_y, margin_y + 5)
+    x_min = margin_x + random.randint(0, 5)
+    y_min = margin_y + random.randint(0, 5)
 
-    x_max = random.randint(base_img.shape[1] - text_size[0] - margin_x - 4, base_img.shape[1] - text_size[0] - margin_x + 1)
-    y_max = random.randint(base_img.shape[0] - text_size[1] - margin_y - 4, base_img.shape[0] - text_size[1] - margin_y + 1)
+    x_max = base_img.shape[1] - text_size[0] - margin_x + random.randint(-4, 1)
+    y_max = base_img.shape[0] - text_size[1] - margin_y + random.randint(-4, 1)
 
-    x = random.choice([x_min, x_max])
-    y = random.choice([y_min, y_max])
+    x_med = random.randint(x_min, x_max)
+    y_med = random.randint(y_min, y_max)
 
-    crop = base_img[y - margin_y: y - margin_y + text_size[1], x - margin_x: x - margin_x + text_size[0]]
+    x = np.random.choice([x_min, x_med, x_max], p=[0.4, 0.2, 0.4]).item()
+    y = np.random.choice([y_min, y_med, y_max], p=[0.4, 0.2, 0.4]).item()
+
+    crop = base_img[y - margin_y: y + text_size[1] + margin_y, x - margin_x: x  + text_size[0] + margin_x]
     if crop.mean() <= 127:
         # Light colors
         code = (random.randint(200, 256), random.randint(200, 256), random.randint(200, 256))
